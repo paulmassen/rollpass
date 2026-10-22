@@ -166,6 +166,14 @@ export default function App() {
             activeIndex={highlightIndex}
           />
 
+          {result && (
+            <TrainingMode
+              password={result.password}
+              keys={result.keys}
+              onCursor={handleTrainCursor}
+            />
+          )}
+
           <ScorePanel
             result={result}
             playing={playing}
@@ -175,14 +183,6 @@ export default function App() {
           />
 
           <SecurityPanel result={result} length={result?.keys.length ?? length} />
-
-          {result && (
-            <TrainingMode
-              password={result.password}
-              keys={result.keys}
-              onCursor={handleTrainCursor}
-            />
-          )}
         </section>
 
         <aside className="stage-controls">
