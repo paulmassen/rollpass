@@ -132,13 +132,8 @@ export const m = {
         role: 'DevOps',
       },
       {
-        quote: 'I showed it to our security team. They asked me to sit down.',
-        name: 'Anonymous',
-        role: 'Probably a developer',
-      },
-      {
         quote:
-          'I unlocked my laptop with one hand while holding a baguette. Zero crumbs.',
+          'I can now unlock my laptop with one hand while holding my baguette.',
         name: 'Emily C.',
         role: 'Paris',
       },
@@ -155,7 +150,7 @@ export const m = {
       },
       {
         quote:
-          'I set it as my Wi-Fi password. I’m sure all my guests will love it.',
+          'I used Rollpass to generate my Wi-Fi password. I’m sure all my guests will love it. A gracious host thinks of everything.',
         name: 'Nina K.',
         role: 'Gracious host',
       },
