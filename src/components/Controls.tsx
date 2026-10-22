@@ -1,5 +1,5 @@
 import { m } from '../messages'
-import { LAYOUT_NAMES } from '../lib/layouts'
+import { LAYOUT_NAMES, layoutSupportsDigits } from '../lib/layouts'
 import type {
   CharsetOptions,
   HandMode,
@@ -45,8 +45,9 @@ export function Controls({
   onCharset,
   onGenerate,
 }: Props) {
+  const digitsAvailable = layoutSupportsDigits(layout)
   const digitsOutOfReach =
-    charset.digits && rowScope !== 'all'
+    charset.digits && digitsAvailable && rowScope !== 'all'
 
   return (
     <div className="controls">
@@ -138,21 +139,34 @@ export function Controls({
               ['lowercase', 'a–z'],
               ['uppercase', 'A–Z'],
               ['digits', '0–9'],
-              ['symbols', '#$%'],
+              ['symbols', layout === 'azerty' ? ',' : '#$%'],
             ] as const
-          ).map(([key, label]) => (
-            <label key={key} className="check">
-              <input
-                type="checkbox"
-                checked={charset[key]}
-                onChange={(e) =>
-                  onCharset({ ...charset, [key]: e.target.checked })
-                }
-              />
-              <span>{label}</span>
-            </label>
-          ))}
+          ).map(([key, label]) => {
+            const unavailable = key === 'digits' && !digitsAvailable
+            return (
+              <label
+                key={key}
+                className={`check${unavailable ? ' is-disabled' : ''}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={charset[key] && !unavailable}
+                  disabled={unavailable}
+                  onChange={(e) =>
+                    onCharset({ ...charset, [key]: e.target.checked })
+                  }
+                />
+                <span>{label}</span>
+              </label>
+            )
+          })}
         </div>
+        {!digitsAvailable && (
+          <p className="control-hint">{m.controls.digitsNeedShift}</p>
+        )}
+        {layout === 'azerty' && (
+          <p className="control-hint">{m.controls.azertySymbols}</p>
+        )}
       </fieldset>
 
       <button type="button" className="btn-generate" onClick={onGenerate}>

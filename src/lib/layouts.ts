@@ -309,8 +309,13 @@ export function fingerIndex(finger: Finger): number {
   return FINGER_ORDER.indexOf(finger)
 }
 
+/**
+ * Plain ASCII letters only. Accented letters (é, ü, ß…) are deliberately
+ * classified as symbols: they are not what "a–z" means, and many sites and
+ * foreign keyboards choke on them.
+ */
 export function isLetter(char: string): boolean {
-  return /^[a-zA-Zàâäéèêëïîôùûüçöüäß]$/u.test(char)
+  return /^[a-zA-Z]$/.test(char)
 }
 
 export function isDigit(char: string): boolean {
@@ -319,4 +324,42 @@ export function isDigit(char: string): boolean {
 
 export function isSymbol(char: string): boolean {
   return !isLetter(char) && !isDigit(char) && char.length === 1
+}
+
+/**
+ * Characters that are dead keys on their layout: pressing them prints nothing
+ * until the next key is typed (then `^` + `e` gives `ê`), so they can't be part
+ * of a password typed key by key.
+ */
+const DEAD_KEY_CHARS: Partial<Record<LayoutId, string>> = {
+  azerty: '^¨',
+  qwertz: '^´`',
+}
+
+export function isDeadKeyChar(layout: LayoutId, char: string): boolean {
+  return DEAD_KEY_CHARS[layout]?.includes(char) ?? false
+}
+
+/**
+ * AZERTY puts digits and most punctuation (? . / § % ° + £) behind Shift.
+ * Those are avoided there: only letters may use Shift (capitals).
+ */
+const AVOIDS_SHIFTED_SPECIALS: ReadonlySet<LayoutId> = new Set(['azerty'])
+
+export function avoidsShiftedSpecials(layout: LayoutId): boolean {
+  return AVOIDS_SHIFTED_SPECIALS.has(layout)
+}
+
+/**
+ * On AZERTY, the comma is the only symbol worth using: it is directly under
+ * the right index finger. Every other symbol is either a stretch, a dead key,
+ * or needs Shift.
+ */
+export function isComfortableSymbol(layout: LayoutId, char: string): boolean {
+  return layout !== 'azerty' || char === ','
+}
+
+/** Whether digits can be typed without Shift on this layout (false on AZERTY). */
+export function layoutSupportsDigits(layout: LayoutId): boolean {
+  return !avoidsShiftedSpecials(layout) || getLayoutKeys(layout).some((k) => isDigit(k.base))
 }

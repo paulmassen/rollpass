@@ -1,8 +1,12 @@
 import {
+  avoidsShiftedSpecials,
   getLayoutKeys,
+  isComfortableSymbol,
+  isDeadKeyChar,
   isDigit,
   isLetter,
   isSymbol,
+  layoutSupportsDigits,
 } from './layouts'
 import { randomFloat, shuffle } from './random'
 import type {
@@ -13,6 +17,7 @@ import type {
   Hand,
   HandMode,
   KeyDef,
+  LayoutId,
   RowScope,
   TypedKey,
 } from './types'
@@ -102,9 +107,18 @@ function charAllowed(char: string, charset: CharsetOptions): boolean {
   return false
 }
 
-function expandKey(key: KeyDef, charset: CharsetOptions): Candidate[] {
+function expandKey(
+  layout: LayoutId,
+  key: KeyDef,
+  charset: CharsetOptions,
+): Candidate[] {
   const out: Candidate[] = []
-  if (charAllowed(key.base, charset)) {
+  const usable = (char: string) =>
+    charAllowed(char, charset) &&
+    !isDeadKeyChar(layout, char) &&
+    (!isSymbol(char) || isComfortableSymbol(layout, char))
+
+  if (usable(key.base)) {
     out.push({
       char: key.base,
       keyId: key.id,
@@ -115,7 +129,10 @@ function expandKey(key: KeyDef, charset: CharsetOptions): Candidate[] {
       shifted: false,
     })
   }
-  if (key.shift !== key.base && charAllowed(key.shift, charset)) {
+  // On some layouts (AZERTY), only letters may use Shift: Shift-only digits and
+  // punctuation are too awkward to type.
+  const shiftAllowed = isLetter(key.shift) || !avoidsShiftedSpecials(layout)
+  if (shiftAllowed && key.shift !== key.base && usable(key.shift)) {
     out.push({
       char: key.shift,
       keyId: key.id,
@@ -282,8 +299,6 @@ const PIVOT_INDEX_ROW = 3
 export const PIVOT_MAX_LENGTH = 24
 /** Number of draws used to estimate entropy in pivot mode. */
 const PIVOT_ENTROPY_SAMPLES = 64
-/** Index resting column: other columns require a lateral stretch. */
-const INDEX_HOME_COL: Partial<Record<Finger, number>> = { LI: 3, RI: 6 }
 
 type PivotPools = {
   /** Index keys on the bottom row. */
@@ -300,7 +315,7 @@ function buildPivotPools(options: GeneratorOptions): PivotPools | null {
 
   for (const key of getLayoutKeys(options.layout)) {
     if (key.hand !== options.handMode) continue
-    const candidates = expandKey(key, options.charset)
+    const candidates = expandKey(options.layout, key, options.charset)
     if (candidates.length === 0) continue
 
     if (roleOf(key.finger) === 'index') {
@@ -331,13 +346,6 @@ function randomInt(n: number): number {
   return Math.floor(randomFloat() * n)
 }
 
-function pivotWeight(c: Candidate, isPivot: boolean): number {
-  let w = comfortWeight(c)
-  // Lateral index column (b / n): less comfortable than the one below it
-  if (isPivot && c.col !== INDEX_HOME_COL[c.finger]) w *= 0.6
-  return w
-}
-
 function generatePivotSequence(
   pools: PivotPools,
   length: number,
@@ -346,11 +354,7 @@ function generatePivotSequence(
   const sequence: TypedKey[] = []
   let bits = 0
 
-  const draw = (
-    candidates: Candidate[],
-    isPivot: boolean,
-    avoidChar?: string,
-  ) => {
+  const draw = (candidates: Candidate[], avoidChar?: string) => {
     // Prefer characters not yet used, then accept repeats.
     let from = candidates.filter((c) => !used.has(c.char))
     if (from.length === 0) from = candidates
@@ -360,7 +364,7 @@ function generatePivotSequence(
     }
     const picked = pickWeighted(
       from,
-      from.map((c) => pivotWeight(c, isPivot)),
+      from.map(comfortWeight),
     )
     bits += picked.bits
     used.add(picked.item.char)
@@ -374,7 +378,7 @@ function generatePivotSequence(
 
   for (let i = 0; i < length; i++) {
     if (i % 2 === 0) {
-      draw(pools.pivot, true, lastPivotChar)
+      draw(pools.pivot, lastPivotChar)
       lastPivotChar = sequence[sequence.length - 1].char
       continue
     }
@@ -390,7 +394,7 @@ function generatePivotSequence(
     bits += Math.log2(choices.length)
     remaining = remaining.filter((k) => k !== chosen)
     lastPartner = chosen
-    draw(pools.partners[chosen], false)
+    draw(pools.partners[chosen])
   }
 
   return { sequence, bits }
@@ -405,7 +409,7 @@ function buildPool(options: GeneratorOptions): Candidate[] {
   })
   const pool: Candidate[] = []
   for (const key of keys) {
-    pool.push(...expandKey(key, options.charset))
+    pool.push(...expandKey(options.layout, key, options.charset))
   }
   const best = new Map<string, Candidate>()
   for (const c of pool) {
@@ -575,7 +579,7 @@ function log2Arrangements(n: number, k: number): number {
 }
 
 export function generatePassword(options: GeneratorOptions): GenerationResult {
-  const charset = normalizeCharset(options.charset)
+  const charset = normalizeCharset(options.charset, options.layout)
   const normalized = { ...options, charset }
   const pivotPools = buildPivotPools(normalized)
   if (pivotPools) return generatePivotPassword(normalized, pivotPools)
@@ -655,16 +659,24 @@ function generatePivotPassword(
   }
 }
 
-function normalizeCharset(charset: CharsetOptions): CharsetOptions {
+function normalizeCharset(
+  charset: CharsetOptions,
+  layout: LayoutId,
+): CharsetOptions {
+  // Digits that can only be typed with Shift (AZERTY) are never offered
+  const effective = {
+    ...charset,
+    digits: charset.digits && layoutSupportsDigits(layout),
+  }
   if (
-    !charset.lowercase &&
-    !charset.uppercase &&
-    !charset.digits &&
-    !charset.symbols
+    !effective.lowercase &&
+    !effective.uppercase &&
+    !effective.digits &&
+    !effective.symbols
   ) {
     return { lowercase: true, uppercase: false, digits: false, symbols: false }
   }
-  return charset
+  return effective
 }
 
 export function estimateMaxLength(
@@ -677,7 +689,7 @@ export function estimateMaxLength(
     layout,
     handMode,
     length: 1,
-    charset: normalizeCharset(charset),
+    charset: normalizeCharset(charset, layout),
     rowScope,
   }
   if (buildPivotPools(options)) return PIVOT_MAX_LENGTH

@@ -32,6 +32,9 @@ export const m = {
       'Digits live on the number row: inactive here. Switch to “All” to include them.',
     pivotNote:
       'One hand: the index finger stays on the bottom row and alternates with the ring, middle and pinky fingers. The selected rows only apply to those three fingers, and index keys may repeat.',
+    digitsNeedShift:
+      'On this layout digits need Shift, so Rollpass leaves them out.',
+    azertySymbols: 'On AZERTY, comma is the only smooth symbol.',
     length: 'Length',
     max: 'max',
     charset: 'Character set',
@@ -114,8 +117,7 @@ export const m = {
   },
 
   testimonials: {
-    title: 'Loved by real people*',
-    footnote: '* Not real people. The entropy estimate, sadly, is real.',
+    title: 'Loved by real people',
     items: [
       {
         quote:
@@ -147,25 +149,32 @@ export const m = {
         role: 'Right wrist, recovering',
       },
       {
-        quote: 'My index finger has never felt so needed.',
-        name: 'Dave',
-        role: 'Index finger, Left',
+        quote: 'Hackers can have my account. I get to type this.',
+        name: 'Chloé',
+        role: 'Optimist',
       },
       {
         quote:
-          'I can tell my desk neighbors are impressed every time I unlock my computer with style.',
+          'I set it as my Wi-Fi password. I’m sure all my guests will love it.',
+        name: 'Nina K.',
+        role: 'Gracious host',
+      },
+      {
+        quote:
+          'At least I got to see my geek grandson’s look change when he asked me to type my password.',
+        name: 'Gérard',
+        role: 'Grandfather, 78',
+      },
+      {
+        quote: 'They see me rollin’ my password, they hatin’.',
+        name: 'Lenny',
+        role: 'Rollin’ since 2026',
+      },
+      {
+        quote:
+          'My desk neighbors are impressed when they see me type my password. I can tell.',
         name: 'Julien M.',
         role: 'Open space, row 3',
-      },
-      {
-        quote: 'The meter said “Weak”. Finally, an app that gets me.',
-        name: 'Tom R.',
-        role: 'Self-employed',
-      },
-      {
-        quote: 'I use Rollpass more than my actual passwords.',
-        name: 'Priya S.',
-        role: 'Internet',
       },
     ],
   },

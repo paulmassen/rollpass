@@ -6,7 +6,7 @@ import { KeyboardViz } from './components/KeyboardViz'
 import { PasswordDisplay } from './components/PasswordDisplay'
 import { ScorePanel } from './components/ScorePanel'
 import { SecurityPanel } from './components/SecurityPanel'
-import { Testimonials } from './components/Testimonials'
+import { HeroTestimonial, Testimonials } from './components/Testimonials'
 import { TrainingMode } from './components/TrainingMode'
 import { m } from './messages'
 import {
@@ -30,7 +30,7 @@ type AppError =
 
 const DEFAULT_CHARSET: CharsetOptions = {
   lowercase: true,
-  uppercase: true,
+  uppercase: false,
   digits: false,
   symbols: false,
 }
@@ -45,7 +45,7 @@ function detectLayout(): LayoutId {
 
 export default function App() {
   const [layout, setLayout] = useState<LayoutId>(() => detectLayout())
-  const [handMode, setHandMode] = useState<HandMode>('both')
+  const [handMode, setHandMode] = useState<HandMode>('right')
   const [rowScope, setRowScope] = useState<RowScope>('home-top')
   const [length, setLength] = useState(12)
   const [charset, setCharset] = useState<CharsetOptions>(DEFAULT_CHARSET)
@@ -130,9 +130,12 @@ export default function App() {
       <div className="atmosphere" aria-hidden="true" />
 
       <header className="hero">
-        <p className="brand">{m.brand}</p>
-        <h1>{m.heroTitle}</h1>
-        <p className="lede">{m.heroLede}</p>
+        <div className="hero-copy">
+          <p className="brand">{m.brand}</p>
+          <h1>{m.heroTitle}</h1>
+          <p className="lede">{m.heroLede}</p>
+        </div>
+        <HeroTestimonial />
       </header>
 
       <main className="stage">

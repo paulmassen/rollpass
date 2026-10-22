@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { isDeadKeyChar, isLetter } from './layouts'
 import {
   GeneratorError,
   estimateMaxLength,
@@ -284,5 +285,129 @@ describe('index pivot mode (one hand)', () => {
     const seen = new Set<string>()
     for (let i = 0; i < 50; i++) seen.add(run('left').password)
     expect(seen.size).toBeGreaterThan(48)
+  })
+})
+
+describe('characters that are awkward to type', () => {
+  const EVERYTHING: CharsetOptions = {
+    lowercase: true,
+    uppercase: true,
+    digits: true,
+    symbols: true,
+  }
+
+  it('AZERTY never needs Shift for anything but capital letters', () => {
+    for (const handMode of HANDS) {
+      for (let i = 0; i < 60; i++) {
+        const r = generatePassword(
+          options({
+            layout: 'azerty',
+            handMode,
+            charset: EVERYTHING,
+            rowScope: 'all',
+            length: 12,
+          }),
+        )
+        for (const k of r.keys) {
+          if (k.shifted) expect(isLetter(k.char)).toBe(true)
+          if (!isLetter(k.char)) expect(k.char).toBe(',')
+        }
+      }
+    }
+  })
+
+  it.each(['azerty', 'qwertz'] as const)(
+    '%s never uses a dead key',
+    (layout) => {
+      for (const handMode of HANDS) {
+        for (let i = 0; i < 60; i++) {
+          const r = generatePassword(
+            options({
+              layout,
+              handMode,
+              charset: EVERYTHING,
+              rowScope: 'all',
+              length: 12,
+            }),
+          )
+          for (const ch of r.password) {
+            expect(isDeadKeyChar(layout, ch)).toBe(false)
+          }
+        }
+      }
+    },
+  )
+
+  it('letters-only passwords are plain ASCII on every layout', () => {
+    for (const layout of LAYOUTS) {
+      for (const handMode of HANDS) {
+        for (let i = 0; i < 20; i++) {
+          const r = generatePassword(
+            options({ layout, handMode, rowScope: 'all', length: 10 }),
+          )
+          expect(r.password).toMatch(/^[A-Za-z]+$/)
+        }
+      }
+    }
+  })
+
+  it('AZERTY uses comma as its only symbol', () => {
+    let seenComma = false
+    for (let i = 0; i < 200; i++) {
+      const r = generatePassword(
+        options({
+          layout: 'azerty',
+          charset: { lowercase: true, uppercase: false, digits: false, symbols: true },
+          rowScope: 'all',
+          length: 12,
+        }),
+      )
+      for (const char of r.password) {
+        if (!isLetter(char)) expect(char).toBe(',')
+        if (char === ',') seenComma = true
+      }
+    }
+    expect(seenComma).toBe(true)
+  })
+
+  it('digits-only on AZERTY falls back to lowercase letters', () => {
+    const r = generatePassword(
+      options({
+        layout: 'azerty',
+        charset: { lowercase: false, uppercase: false, digits: true, symbols: false },
+        rowScope: 'all',
+      }),
+    )
+    expect(r.password).toMatch(/^[a-z]+$/)
+  })
+
+  it('digits still work without Shift on QWERTY', () => {
+    const r = generatePassword(
+      options({
+        layout: 'qwerty',
+        charset: { lowercase: false, uppercase: false, digits: true, symbols: false },
+        rowScope: 'all',
+        length: 8,
+      }),
+    )
+    expect(r.password).toMatch(/^[0-9]{8}$/)
+  })
+})
+
+describe('index pivot reaches both bottom-row keys', () => {
+  it.each([
+    ['left', ['v', 'b']],
+    ['right', ['n', 'm']],
+  ] as const)('%s hand uses %j', (hand, expected) => {
+    const seen = new Set<string>()
+    for (let i = 0; i < 80; i++) {
+      const r = generatePassword(
+        options({ handMode: hand, length: 13, rowScope: 'home-top' }),
+      )
+      r.keys.forEach((k, j) => {
+        if (j % 2 === 0) seen.add(k.keyId)
+      })
+    }
+    for (const id of expected) expect(seen).toContain(id)
   })
 })

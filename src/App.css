@@ -32,7 +32,10 @@
 }
 
 .hero {
-  max-width: 42rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.7fr);
+  gap: clamp(1.5rem, 5vw, 5rem);
+  max-width: 68rem;
   margin-bottom: clamp(1.75rem, 4vw, 3rem);
   animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -64,6 +67,61 @@
   color: var(--muted);
   font-size: 1.02rem;
   line-height: 1.55;
+}
+
+.hero-testimonial {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+  align-self: end;
+  min-height: 100%;
+  margin: 0;
+  padding: clamp(1.25rem, 2.5vw, 1.75rem);
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+.hero-testimonial blockquote {
+  margin: 0;
+}
+
+.hero-testimonial blockquote p {
+  max-width: 24ch;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.7vw, 2rem);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: -0.03em;
+}
+
+.hero-testimonial blockquote p::before {
+  content: '\201C';
+}
+
+.hero-testimonial blockquote p::after {
+  content: '\201D';
+}
+
+.hero-testimonial figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.6rem;
+  font-size: 0.84rem;
+}
+
+.hero-testimonial figcaption strong {
+  font-weight: 700;
+}
+
+.hero-testimonial figcaption span {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: color-mix(in oklab, var(--bg) 72%, transparent);
 }
 
 .stage {
@@ -746,6 +804,17 @@ input[type='range'] {
   }
 }
 
+@media (max-width: 720px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .hero-testimonial {
+    min-height: auto;
+  }
+}
+
 @media (max-width: 560px) {
   .app {
     padding: 1rem;
@@ -966,14 +1035,6 @@ input[type='range'] {
   background: var(--panel);
 }
 
-.testimonial.is-feature {
-  grid-column: 1 / -1;
-  padding: 1.5rem 1.6rem;
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--bg);
-}
-
 .testimonial blockquote {
   margin: 0;
 }
@@ -985,13 +1046,6 @@ input[type='range'] {
   font-weight: 650;
   line-height: 1.35;
   letter-spacing: -0.02em;
-}
-
-.testimonial.is-feature blockquote p {
-  max-width: 28ch;
-  font-size: clamp(1.4rem, 3.2vw, 2.1rem);
-  line-height: 1.2;
-  letter-spacing: -0.03em;
 }
 
 .testimonial blockquote p::before {
@@ -1017,16 +1071,6 @@ input[type='range'] {
 .testimonial figcaption span {
   font-family: var(--font-mono);
   font-size: 0.78rem;
-  color: var(--muted);
-}
-
-.testimonial.is-feature figcaption span {
-  color: color-mix(in oklab, var(--bg) 72%, transparent);
-}
-
-.testimonials-footnote {
-  margin: 0.9rem 0 0;
-  font-size: 0.8rem;
   color: var(--muted);
 }
 
@@ -1129,4 +1173,13 @@ input[type='range'] {
 
 .footer-links a:hover {
   color: var(--ink);
+}
+
+.check.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.check.is-disabled input {
+  cursor: not-allowed;
 }

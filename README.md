@@ -10,6 +10,7 @@ Generates passwords designed to be **typed very fast**: alternating fingers (or 
 - **Two hands**: favors left / right alternation
 - **One hand** (left or right): **index pivot** mode. The index finger stays on the bottom row and alternates with the ring, middle and pinky fingers (in a random order each cycle), for example `index → ring → index → middle → index → pinky`. No crossed fingers, the hand barely moves
 - **Unique keys** with two hands (a and A count as the same key). With one hand, only the index keys (2 on its row) come back, never twice in a row; the other fingers avoid repeats as long as free characters remain
+- **Easy to type**: no dead keys (`^`, `¨`…) on AZERTY and QWERTZ; on AZERTY nothing that needs Shift except capital letters (so no digits there), and the comma is the only available symbol; `a–z` means plain ASCII letters
 - **Visualization** of the path on the keyboard, plus a flow score
 - **Practice mode**: time yourself typing the generated password
 - **Strength**: an entropy estimate is shown for every generation
