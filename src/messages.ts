@@ -156,7 +156,7 @@ export const m = {
       },
       {
         quote:
-          'At least I got to see my geek grandson’s look change when he asked me to type my password.',
+          'Ever since he saw me type my password, I can tell I’ve earned my geek grandson’s respect.',
         name: 'Gérard',
         role: 'Grandfather, 78',
       },
