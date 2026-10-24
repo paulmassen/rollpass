@@ -296,7 +296,7 @@ function transitionWeight(
  */
 const PIVOT_INDEX_ROW = 3
 /** Maximum length offered in pivot mode. */
-export const PIVOT_MAX_LENGTH = 24
+export const PIVOT_MAX_LENGTH = 48
 /** Number of draws used to estimate entropy in pivot mode. */
 const PIVOT_ENTROPY_SAMPLES = 64
 

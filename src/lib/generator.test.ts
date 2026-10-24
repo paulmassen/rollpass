@@ -266,7 +266,7 @@ describe('index pivot mode (one hand)', () => {
 
   it('accepts up to the announced maximum length, not beyond', () => {
     const max = estimateMaxLength('qwerty', 'left', LETTERS, 'home-top')
-    expect(max).toBeGreaterThanOrEqual(20)
+    expect(max).toBe(48)
     expect(run('left', { length: max }).password).toHaveLength(max)
     expect(() => run('left', { length: max + 1 })).toThrowError(GeneratorError)
   })
