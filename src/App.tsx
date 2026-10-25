@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Controls } from './components/Controls'
 import { Faq } from './components/Faq'
 import { Footer } from './components/Footer'
@@ -55,6 +55,10 @@ export default function App() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [playing, setPlaying] = useState(false)
   const [trainCursor, setTrainCursor] = useState<number | null>(null)
+  // Each replay gets a token; a newer replay (or unmount) cancels older ones,
+  // so two loops never fight over the highlighted key.
+  const replayToken = useRef(0)
+  const copiedTimer = useRef<number | undefined>(undefined)
 
   const maxLength = useMemo(
     () => estimateMaxLength(layout, handMode, charset, rowScope),
@@ -82,7 +86,8 @@ export default function App() {
       setResult(next)
       void replayPath(next.keys.length)
     } catch (e) {
-      setResult(null)
+      // Keep the previous password on screen: the error explains what to
+      // change, it should not wipe the last good result.
       setError(
         e instanceof GeneratorError
           ? {
@@ -96,24 +101,37 @@ export default function App() {
   }
 
   async function replayPath(count: number) {
+    const token = ++replayToken.current
     setPlaying(true)
     for (let i = 0; i < count; i++) {
+      if (token !== replayToken.current) return
       setActiveIndex(i)
       await wait(140)
     }
+    if (token !== replayToken.current) return
     setActiveIndex(null)
     setPlaying(false)
   }
 
+  useEffect(
+    () => () => {
+      replayToken.current++
+      window.clearTimeout(copiedTimer.current)
+    },
+    [],
+  )
+
   async function handleCopy() {
     if (!result) return
-    try {
-      await navigator.clipboard.writeText(result.password)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 1600)
-    } catch {
+    const ok = await copyText(result.password)
+    if (!ok) {
       setError({ kind: 'copy' })
+      return
     }
+    setError((prev) => (prev?.kind === 'copy' ? null : prev))
+    setCopied(true)
+    window.clearTimeout(copiedTimer.current)
+    copiedTimer.current = window.setTimeout(() => setCopied(false), 1600)
   }
 
   const handleTrainCursor = useCallback((index: number | null) => {
@@ -138,8 +156,11 @@ export default function App() {
         <HeroTestimonial />
       </header>
 
+      {/* DOM order = reading order on narrow screens: result, settings,
+          practice, verdicts. Wide screens move the settings into the right
+          column with grid areas (App.css), keeping the same tab order. */}
       <main className="stage">
-        <section className="stage-primary">
+        <section className="stage-result" aria-label={m.password.resultAria}>
           <PasswordDisplay
             password={result?.password ?? ''}
             keys={result?.keys ?? []}
@@ -165,24 +186,6 @@ export default function App() {
             path={result?.keys ?? []}
             activeIndex={highlightIndex}
           />
-
-          {result && (
-            <TrainingMode
-              password={result.password}
-              keys={result.keys}
-              onCursor={handleTrainCursor}
-            />
-          )}
-
-          <ScorePanel
-            result={result}
-            playing={playing}
-            onReplay={() => {
-              if (result) void replayPath(result.keys.length)
-            }}
-          />
-
-          <SecurityPanel result={result} length={result?.keys.length ?? length} />
         </section>
 
         <aside className="stage-controls">
@@ -203,6 +206,27 @@ export default function App() {
 
           <p className="aside-note">{m.asideNote}</p>
         </aside>
+
+        {result && (
+          <TrainingMode
+            password={result.password}
+            keys={result.keys}
+            onCursor={handleTrainCursor}
+          />
+        )}
+
+        {result && (
+          <div className="verdicts">
+            <ScorePanel
+              result={result}
+              playing={playing}
+              onReplay={() => {
+                if (result) void replayPath(result.keys.length)
+              }}
+            />
+            <SecurityPanel result={result} length={result.keys.length} />
+          </div>
+        )}
       </main>
 
       <Testimonials />
@@ -212,6 +236,40 @@ export default function App() {
       <Footer />
     </div>
   )
+}
+
+/**
+ * Clipboard API first; falls back to a hidden textarea + execCommand for
+ * browsers or contexts where the async API is missing or refused (older
+ * Safari, embedded webviews, non-secure origins).
+ */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch {
+    /* fall through to the legacy path */
+  }
+  const active = document.activeElement as HTMLElement | null
+  const area = document.createElement('textarea')
+  area.value = text
+  area.setAttribute('readonly', '')
+  area.style.position = 'fixed'
+  area.style.opacity = '0'
+  area.style.pointerEvents = 'none'
+  document.body.appendChild(area)
+  area.select()
+  let ok = false
+  try {
+    ok = document.execCommand('copy')
+  } catch {
+    ok = false
+  }
+  area.remove()
+  active?.focus({ preventScroll: true })
+  return ok
 }
 
 function wait(ms: number) {

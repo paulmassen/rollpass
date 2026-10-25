@@ -23,9 +23,14 @@ export function TrainingMode({ password, keys, onCursor }: Props) {
   const [best, setBest] = useState<Attempt | null>(null)
   const [last, setLast] = useState<Attempt | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const sectionRef = useRef<HTMLElement>(null)
+  const retryRef = useRef<HTMLButtonElement>(null)
 
+  // A new password clears the attempt but never moves focus: generating must
+  // not yank the page down to this field (WCAG 3.2.2). Focus only follows an
+  // explicit restart (Esc, Enter, the buttons below).
   useEffect(() => {
-    reset()
+    reset({ focus: false })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [password])
 
@@ -33,7 +38,11 @@ export function TrainingMode({ password, keys, onCursor }: Props) {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return
-      if (e.key === 'Escape' && (done || input.length > 0)) {
+      // Esc belongs to the practice only while the user is in it (or just
+      // finished); elsewhere it stays free for the browser and other widgets.
+      const inSection =
+        e.target instanceof Node && !!sectionRef.current?.contains(e.target)
+      if (e.key === 'Escape' && inSection && (done || input.length > 0)) {
         e.preventDefault()
         reset()
         return
@@ -69,13 +78,13 @@ export function TrainingMode({ password, keys, onCursor }: Props) {
     return () => onCursor(null)
   }, [input, done, password, onCursor])
 
-  function reset() {
+  function reset({ focus = true }: { focus?: boolean } = {}) {
     setInput('')
     setStartedAt(null)
     setElapsed(0)
     setDone(false)
     onCursor(null)
-    window.setTimeout(() => inputRef.current?.focus(), 0)
+    if (focus) window.setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   function finish(ms: number, errors: number) {
@@ -85,6 +94,9 @@ export function TrainingMode({ password, keys, onCursor }: Props) {
     setLast(attempt)
     setBest((prev) => (!prev || ms < prev.ms ? attempt : prev))
     setDone(true)
+    // The field becomes disabled and would drop focus to <body>: hand it to
+    // "Try again" so keyboard users stay in the flow.
+    window.setTimeout(() => retryRef.current?.focus({ preventScroll: true }), 0)
   }
 
   function onChange(value: string) {
@@ -112,10 +124,10 @@ export function TrainingMode({ password, keys, onCursor }: Props) {
   const perfect = done && last && last.errors === 0
 
   return (
-    <section className="training">
+    <section className="training" ref={sectionRef} aria-labelledby="training-title">
       <div className="training-header">
-        <h2>{m.training.title}</h2>
-        <p>{m.training.intro}</p>
+        <h2 id="training-title">{m.training.title}</h2>
+        <p id="training-intro">{m.training.intro}</p>
       </div>
 
       <div className="training-target" aria-hidden="true">
@@ -142,7 +154,9 @@ export function TrainingMode({ password, keys, onCursor }: Props) {
           autoCapitalize="off"
           spellCheck={false}
           value={input}
+          maxLength={password.length}
           disabled={done || !password}
+          aria-describedby="training-intro"
           placeholder={m.training.placeholder}
           onChange={(e) => onChange(e.target.value)}
         />
@@ -173,6 +187,13 @@ export function TrainingMode({ password, keys, onCursor }: Props) {
         )}
       </div>
 
+      {/* Always mounted so screen readers reliably announce the result. */}
+      <p className="sr-only" role="status">
+        {done && last
+          ? `${perfect ? m.training.perfect : m.training.finished} ${formatMs(last.ms)}, ${last.cpm} ${m.training.cpm}${last.errors > 0 ? `, ${m.training.errors(last.errors)}` : ''}`
+          : ''}
+      </p>
+
       {done && last && (
         <div className={`training-result ${perfect ? 'is-perfect' : ''}`}>
           <p>
@@ -182,8 +203,9 @@ export function TrainingMode({ password, keys, onCursor }: Props) {
           </p>
           <button
             type="button"
+            ref={retryRef}
             className="btn-retry"
-            onClick={reset}
+            onClick={() => reset()}
             aria-keyshortcuts="Enter"
           >
             {m.training.retry} <kbd>{m.training.retryKey}</kbd>
@@ -195,7 +217,7 @@ export function TrainingMode({ password, keys, onCursor }: Props) {
         <button
           type="button"
           className="btn-ghost training-reset"
-          onClick={reset}
+          onClick={() => reset()}
           aria-keyshortcuts="Escape"
         >
           {m.training.reset} <kbd>{m.training.resetKey}</kbd>

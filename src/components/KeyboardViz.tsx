@@ -32,9 +32,14 @@ export function KeyboardViz({
   })
 
   const rows = [0, 1, 2, 3]
+  // The visual path (numbers on keys, colors) is invisible to screen readers:
+  // spell it out as "1 n, right index; 2 k, right middle; ...".
+  const pathLabel = path
+    .map((k, i) => `${i + 1} ${k.char}, ${m.fingers[k.finger].toLowerCase()}`)
+    .join('; ')
 
   return (
-    <div className="keyboard" role="img" aria-label={m.password.keyboardAria(LAYOUT_NAMES[layout])}>
+    <div className="keyboard" role="img" aria-label={m.password.keyboardAria(LAYOUT_NAMES[layout], pathLabel)}>
       {rows.map((row) => {
         const rowKeys = keys.filter((k) => k.row === row)
         const rowOff = allowedRows != null && !allowedRows.includes(row)

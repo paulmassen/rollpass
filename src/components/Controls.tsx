@@ -67,6 +67,9 @@ export function Controls({
             </button>
           ))}
         </div>
+        <p className="seg-current" aria-hidden="true">
+          {m.controls.layoutRegions[layout]}
+        </p>
       </fieldset>
 
       <fieldset className="control-block">
@@ -85,11 +88,14 @@ export function Controls({
             </button>
           ))}
         </div>
+        <p className="seg-current" aria-hidden="true">
+          {m.controls.hands[handMode].hint}
+        </p>
       </fieldset>
 
       <fieldset className="control-block">
         <legend>{m.controls.rows}</legend>
-        <div className="segmented hand-grid" role="group" aria-label={m.controls.rowsAria}>
+        <div className="segmented rows-grid" role="group" aria-label={m.controls.rowsAria}>
           {ROW_SCOPES.map((id) => (
             <button
               key={id}
@@ -103,6 +109,9 @@ export function Controls({
             </button>
           ))}
         </div>
+        <p className="seg-current" aria-hidden="true">
+          {m.controls.rowScopes[rowScope].hint}
+        </p>
         {handMode !== 'both' && (
           <p className="control-hint">{m.controls.pivotNote}</p>
         )}
@@ -121,9 +130,7 @@ export function Controls({
           max={Math.max(6, maxLength)}
           value={Math.min(length, maxLength)}
           onChange={(e) => onLength(Number(e.target.value))}
-          aria-valuemin={6}
-          aria-valuemax={maxLength}
-          aria-valuenow={length}
+          aria-label={m.controls.lengthAria}
         />
         <div className="range-meta">
           <span>6</span>
@@ -169,9 +176,11 @@ export function Controls({
         )}
       </fieldset>
 
-      <button type="button" className="btn-generate" onClick={onGenerate}>
-        {m.controls.generate}
-      </button>
+      <div className="generate-dock">
+        <button type="button" className="btn-generate" onClick={onGenerate}>
+          {m.controls.generate}
+        </button>
+      </div>
     </div>
   )
 }

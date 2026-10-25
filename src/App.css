@@ -11,24 +11,10 @@
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(900px 480px at 8% -10%, #f4efe3 0%, transparent 55%),
-    radial-gradient(700px 420px at 92% 8%, #cfe4dc 0%, transparent 50%),
-    radial-gradient(600px 500px at 70% 100%, #d9e3ea 0%, transparent 45%),
+    radial-gradient(900px 480px at 8% -10%, var(--panel) 0%, transparent 55%),
+    radial-gradient(700px 420px at 92% 8%, color-mix(in oklab, var(--accent) 16%, var(--bg)) 0%, transparent 50%),
+    radial-gradient(600px 500px at 70% 100%, color-mix(in oklab, var(--left) 12%, var(--bg)) 0%, transparent 45%),
     linear-gradient(165deg, var(--bg) 0%, var(--bg-deep) 100%);
-}
-
-.atmosphere::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.35;
-  background-image: repeating-linear-gradient(
-    -18deg,
-    transparent 0 14px,
-    color-mix(in oklab, var(--ink) 4%, transparent) 14px 15px
-  );
-  mask-image: linear-gradient(to bottom, black 0%, transparent 78%);
-  pointer-events: none;
 }
 
 .hero {
@@ -55,7 +41,7 @@
   max-width: 18ch;
   font-family: var(--font-display);
   font-size: clamp(1.35rem, 2.8vw, 1.85rem);
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.2;
   color: var(--ink-soft);
@@ -124,20 +110,45 @@
   color: color-mix(in oklab, var(--bg) 72%, transparent);
 }
 
+/* Stage: result + keyboard lead, settings sit beside them on wide screens,
+   practice and the two verdicts follow. Gaps: tight inside a group (--gap-in),
+   wider between groups (--gap-out). */
 .stage {
+  --gap-in: 0.75rem;
+  --gap-out: clamp(1.25rem, 2.5vw, 1.75rem);
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr);
-  gap: clamp(1.25rem, 3vw, 2.25rem);
+  grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.75fr);
+  grid-template-areas:
+    'result   controls'
+    'practice controls'
+    'verdicts controls';
+  grid-template-rows: auto auto 1fr;
+  column-gap: clamp(1.25rem, 3vw, 2.25rem);
+  row-gap: var(--gap-out);
   align-items: start;
   animation: rise 0.8s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.stage-primary {
+.stage-result {
+  grid-area: result;
   display: grid;
-  gap: 1.15rem;
+  gap: var(--gap-in);
+}
+
+.stage > .training {
+  grid-area: practice;
+}
+
+.verdicts {
+  grid-area: verdicts;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: var(--gap-in);
+  align-items: stretch;
 }
 
 .stage-controls {
+  grid-area: controls;
   position: sticky;
   top: 1rem;
 }
@@ -227,7 +238,8 @@
   background: transparent;
   color: var(--ink);
   border-radius: 999px;
-  padding: 0.55rem 1rem;
+  min-height: var(--tap);
+  padding: 0.55rem 1.1rem;
   font-weight: 600;
 }
 
@@ -250,8 +262,8 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in oklab, #2a3342 92%, black),
-      color-mix(in oklab, #1a222e 96%, black)
+      var(--kb-top),
+      var(--kb-bottom)
     );
   box-shadow:
     var(--shadow),
@@ -281,12 +293,12 @@
   border: 1px solid color-mix(in oklab, white 10%, transparent);
   background: linear-gradient(
     180deg,
-    color-mix(in oklab, #3a4558 90%, white),
-    #2b3444
+    var(--key-top),
+    var(--key-bottom)
   );
-  color: #d7dde8;
+  color: var(--key-ink);
   box-shadow:
-    0 2px 0 #121820,
+    0 2px 0 var(--key-edge),
     inset 0 1px 0 color-mix(in oklab, white 14%, transparent);
   transition:
     transform 0.18s ease,
@@ -304,11 +316,15 @@
 
 .key-step {
   position: absolute;
-  top: 3px;
+  top: 2px;
   right: 4px;
-  font-size: 0.55rem;
-  font-weight: 700;
-  color: color-mix(in oklab, white 55%, transparent);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in oklab, white 82%, transparent);
 }
 
 .key.is-dimmed {
@@ -319,18 +335,18 @@
 .key.is-path {
   background: linear-gradient(
     180deg,
-    color-mix(in oklab, var(--accent) 55%, #2b3444),
-    color-mix(in oklab, var(--accent) 28%, #1f2836)
+    color-mix(in oklab, var(--accent) 55%, var(--key-bottom)),
+    color-mix(in oklab, var(--accent) 28%, var(--key-path-mix))
   );
-  color: #f4fff9;
+  color: var(--key-ink-strong);
   border-color: color-mix(in oklab, var(--accent) 55%, white);
 }
 
 .key.is-path.hand-left {
   background: linear-gradient(
     180deg,
-    color-mix(in oklab, var(--left) 60%, #2b3444),
-    color-mix(in oklab, var(--left) 30%, #1f2836)
+    color-mix(in oklab, var(--left) 60%, var(--key-bottom)),
+    color-mix(in oklab, var(--left) 30%, var(--key-path-mix))
   );
   border-color: color-mix(in oklab, var(--left) 55%, white);
 }
@@ -342,11 +358,16 @@
     color-mix(in oklab, var(--accent-hot) 75%, white),
     var(--accent-hot)
   );
-  color: #1c1208;
+  color: var(--key-hot-ink);
   box-shadow:
-    0 1px 0 #7a3408,
+    0 1px 0 var(--key-hot-edge),
     0 0 0 2px color-mix(in oklab, var(--accent-hot) 45%, transparent);
   z-index: 2;
+}
+
+/* On the hot key the light step number would vanish: switch to its ink. */
+.key.is-active .key-step {
+  color: var(--key-hot-ink);
 }
 
 .score-panel {
@@ -378,7 +399,10 @@
   color: var(--muted);
   font-size: 0.88rem;
   font-weight: 600;
-  padding: 0.25rem 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -447,8 +471,8 @@
 
 .controls {
   display: grid;
-  gap: 1rem;
-  padding: 1.15rem;
+  gap: 1.1rem;
+  padding: 1.15rem 1.15rem 0;
   border: 1px solid var(--line);
   border-radius: calc(var(--radius) + 4px);
   background: var(--panel);
@@ -463,7 +487,7 @@
 }
 
 .control-block legend {
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.45rem;
   font-family: var(--font-display);
   font-size: 0.92rem;
   font-weight: 700;
@@ -476,28 +500,52 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Compact segmented controls: one short label per option, the hint of the
+   selected option is shown once under the group (.seg-current). The per-option
+   hint stays in the DOM, visually hidden, so each button keeps its full
+   accessible name. */
 .segmented {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
-.layout-grid {
+.layout-grid,
+.rows-grid {
   grid-template-columns: 1fr 1fr;
 }
 
 .hand-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .segmented button {
-  display: grid;
-  gap: 0.12rem;
-  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  text-align: center;
   border: 1px solid var(--line);
   background: color-mix(in oklab, white 55%, transparent);
   border-radius: 10px;
-  padding: 0.65rem 0.75rem;
+  padding: 0.4rem 0.5rem;
   color: var(--ink-soft);
+  line-height: 1.2;
+}
+
+.segmented .seg-hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.seg-current {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--muted);
 }
 
 .segmented button:hover {
@@ -516,13 +564,8 @@
   font-size: 0.92rem;
 }
 
-.seg-hint {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
 .control-hint {
-  margin: 0.55rem 0 0;
+  margin: 0.4rem 0 0;
   font-size: 0.78rem;
   line-height: 1.4;
   color: var(--muted);
@@ -538,7 +581,8 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.5rem 0.6rem;
+  min-height: var(--tap);
+  padding: 0.4rem 0.65rem;
   border-radius: 10px;
   border: 1px solid var(--line);
   background: color-mix(in oklab, white 45%, transparent);
@@ -556,16 +600,35 @@
 }
 
 input[type='range'] {
+  display: block;
   width: 100%;
+  height: var(--tap);
+  margin: 0;
   accent-color: var(--accent);
 }
 
 .range-meta {
   display: flex;
   justify-content: space-between;
-  margin-top: 0.25rem;
+  margin-top: 0;
   font-size: 0.78rem;
   color: var(--muted);
+}
+
+/* Generate stays reachable: it sticks to the bottom of the viewport while
+   any part of the settings panel is on screen. */
+.generate-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  margin: 0 -1.15rem;
+  padding: 0.75rem 1.15rem 1.15rem;
+  border-radius: 0 0 calc(var(--radius) + 4px) calc(var(--radius) + 4px);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--panel) 0%, transparent),
+    var(--panel) 0.75rem
+  );
 }
 
 .btn-generate {
@@ -574,7 +637,7 @@ input[type='range'] {
   border-radius: 12px;
   padding: 0.95rem 1rem;
   background: var(--ink);
-  color: #f3efe6;
+  color: var(--on-ink);
   font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 700;
@@ -708,6 +771,7 @@ input[type='range'] {
 }
 
 .training-meta strong {
+  font-variant-numeric: tabular-nums;
   font-size: 0.95rem;
   font-weight: 700;
 }
@@ -746,7 +810,7 @@ input[type='range'] {
   border-radius: 999px;
   padding: 0.55rem 1rem;
   background: var(--ink);
-  color: #f3efe6;
+  color: var(--on-ink);
   font-weight: 700;
 }
 
@@ -790,13 +854,19 @@ input[type='range'] {
 }
 
 @media (max-width: 920px) {
+  /* Single column in DOM order: result, settings, practice, verdicts. */
   .stage {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'result'
+      'controls'
+      'practice'
+      'verdicts';
+    grid-template-rows: none;
   }
 
   .stage-controls {
     position: static;
-    order: -1;
   }
 
   .hero h1 {
@@ -828,18 +898,24 @@ input[type='range'] {
   .key-step {
     display: none;
   }
-
-  .layout-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
+/* Reduced motion: no entrances, no movement. Colour changes stay (shortened)
+   so the replay, the typing cursor and selected states still read. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation: none !important;
-    transition: none !important;
+    transition-property: background, background-color, color, border-color,
+      box-shadow, opacity !important;
+    transition-duration: 0.12s !important;
+  }
+
+  .key.is-active,
+  .pwd-char.is-active,
+  .btn-generate:hover {
+    transform: none;
   }
 }
 
@@ -856,7 +932,7 @@ input[type='range'] {
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 700;
-  color: #fff;
+  color: white;
   background: var(--muted);
 }
 
@@ -865,7 +941,7 @@ input[type='range'] {
 }
 
 .strength-badge.is-fair {
-  background: #8a4a0e;
+  background: var(--warn);
 }
 
 .strength-badge.is-good {
@@ -896,11 +972,12 @@ input[type='range'] {
 }
 
 .entropy-bar.is-fair i {
-  background: #8a4a0e;
+  background: var(--warn);
 }
 
 .security-note,
 .security-warning {
+  max-width: 68ch;
   margin: 0 0 0.55rem;
   font-size: 0.82rem;
   line-height: 1.5;
@@ -909,8 +986,10 @@ input[type='range'] {
 
 .security-warning {
   margin-bottom: 0;
-  padding-left: 0.7rem;
-  border-left: 3px solid var(--accent-hot);
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--accent-hot) 9%, transparent);
+  color: var(--ink-soft);
 }
 
 /* ---------- FAQ ---------- */
@@ -1043,7 +1122,7 @@ input[type='range'] {
   margin: 0;
   font-family: var(--font-display);
   font-size: 1.08rem;
-  font-weight: 650;
+  font-weight: 700;
   line-height: 1.35;
   letter-spacing: -0.02em;
 }
@@ -1126,17 +1205,18 @@ input[type='range'] {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.55rem 1rem;
+  min-height: var(--tap);
+  padding: 0.55rem 1.1rem;
   border-radius: 999px;
   background: var(--ink);
-  color: #f3efe6;
+  color: var(--on-ink);
   font-size: 0.88rem;
   font-weight: 700;
   text-decoration: none;
 }
 
 .btn-sponsor span {
-  color: #ff9a6b;
+  color: var(--heart);
 }
 
 .btn-sponsor:hover {
@@ -1166,6 +1246,9 @@ input[type='range'] {
 }
 
 .footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
   color: var(--ink-soft);
   font-weight: 600;
   text-underline-offset: 3px;

@@ -36,6 +36,7 @@ export const m = {
       'On this layout digits need Shift, so Rollpass leaves them out.',
     azertySymbols: 'On AZERTY, comma is the only smooth symbol.',
     length: 'Length',
+    lengthAria: 'Password length',
     max: 'max',
     charset: 'Character set',
     generate: 'Generate',
@@ -47,11 +48,15 @@ export const m = {
     copy: 'Copy',
     copied: 'Copied',
     copyAria: 'Copy password',
-    copyError: 'Could not copy to the clipboard.',
-    generateError: 'Generation failed.',
+    resultAria: 'Generated password',
+    copyError:
+      'Your browser blocked the clipboard. Select the password above and copy it by hand.',
+    generateError:
+      'Something went wrong while generating. Try again, or change a setting.',
     notEnoughKeys: (available: number, requested: number) =>
       `Not enough unique keys (${available}) for a length of ${requested}. Shorten the password or enable more characters.`,
-    keyboardAria: (layout: string) => `${layout} keyboard`,
+    keyboardAria: (layout: string, path: string) =>
+      path ? `${layout} keyboard. Typing path: ${path}.` : `${layout} keyboard`,
     keyTitle: (hand: 'left' | 'right', finger: string, shifted: boolean) =>
       `${hand === 'left' ? 'Left' : 'Right'} · ${finger}${shifted ? ' · Shift' : ''}`,
   },

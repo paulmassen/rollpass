@@ -11,7 +11,24 @@
   --left: #1b6480;
   --right: #0c6a55;
   --danger: #9b2c2c;
+  --warn: #8a4a0e;
+  /* Text on --ink surfaces (primary buttons, hero quote). */
+  --on-ink: #f3efe6;
+  --heart: #ff9a6b;
+
+  /* Keyboard: a dark object sitting on the light page. */
+  --kb-top: #222a36;
+  --kb-bottom: #161d27;
+  --key-top: #404a5c;
+  --key-bottom: #2b3444;
+  --key-path-mix: #1f2836;
+  --key-ink: #d7dde8;
+  --key-ink-strong: #f4fff9;
+  --key-edge: #121820;
+  --key-hot-ink: #1c1208;
+  --key-hot-edge: #7a3408;
   --shadow: 0 18px 50px color-mix(in oklab, var(--ink) 12%, transparent);
+  --tap: 2.75rem;
   --radius: 14px;
   --font-display: 'Syne', sans-serif;
   --font-body: 'Figtree', sans-serif;
@@ -22,6 +39,13 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  scrollbar-color: color-mix(in oklab, var(--ink) 30%, transparent) transparent;
+  caret-color: var(--accent-hot);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent-hot) 28%, transparent);
+  color: var(--ink);
 }
 
 *,
