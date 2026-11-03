@@ -24,17 +24,9 @@ import type {
 
 /** Physical rows allowed for a given scope. */
 export function rowsForScope(scope: RowScope): number[] | null {
-  switch (scope) {
-    case 'home-top':
-      return [1, 2]
-    case 'home-bottom':
-      return [2, 3]
-    case 'top-bottom':
-      return [1, 3]
-    case 'all':
-    default:
-      return null
-  }
+  if (scope === 'all') return null
+  const rows: Record<string, number> = { number: 0, top: 1, home: 2, bottom: 3 }
+  return scope.split('-').map((name) => rows[name])
 }
 
 /** Generation error: the message is translated on the UI side. */
@@ -310,16 +302,17 @@ type PivotPools = {
 function buildPivotPools(options: GeneratorOptions): PivotPools | null {
   if (options.handMode === 'both') return null
   const allowedRows = rowsForScope(options.rowScope)
+  if (allowedRows && !allowedRows.includes(PIVOT_INDEX_ROW)) return null
   const pivot: Candidate[] = []
   const byFinger = new Map<Finger, Candidate[]>()
 
   for (const key of getLayoutKeys(options.layout)) {
-    if (key.hand !== options.handMode) continue
+    if (key.hand !== options.handMode || options.excludedKeyIds?.includes(key.id)) continue
     const candidates = expandKey(options.layout, key, options.charset)
     if (candidates.length === 0) continue
 
     if (roleOf(key.finger) === 'index') {
-      // The index is always on the bottom row, whatever the row restriction.
+      // Pivot mode is available only when the bottom row is selected.
       if (key.row === PIVOT_INDEX_ROW) pivot.push(...candidates)
       continue
     }
@@ -404,6 +397,7 @@ function buildPool(options: GeneratorOptions): Candidate[] {
   const allowedRows = rowsForScope(options.rowScope)
   const keys = getLayoutKeys(options.layout).filter((k) => {
     if (!handFilter(k.hand, options.handMode)) return false
+    if (options.excludedKeyIds?.includes(k.id)) return false
     if (allowedRows && !allowedRows.includes(k.row)) return false
     return true
   })
@@ -684,6 +678,7 @@ export function estimateMaxLength(
   handMode: HandMode,
   charset: CharsetOptions,
   rowScope: RowScope = 'all',
+  excludedKeyIds: string[] = [],
 ): number {
   const options: GeneratorOptions = {
     layout,
@@ -691,6 +686,7 @@ export function estimateMaxLength(
     length: 1,
     charset: normalizeCharset(charset, layout),
     rowScope,
+    excludedKeyIds,
   }
   if (buildPivotPools(options)) return PIVOT_MAX_LENGTH
   return countKeys(buildPool(options))

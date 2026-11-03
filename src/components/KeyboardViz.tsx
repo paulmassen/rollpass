@@ -9,6 +9,8 @@ type Props = {
   rowScope: RowScope
   path: TypedKey[]
   activeIndex: number | null
+  excludedKeyIds: string[]
+  onToggleKey: (id: string) => void
 }
 
 const ROW_OFFSETS = [0, 0.55, 0.85, 1.35]
@@ -19,6 +21,8 @@ export function KeyboardViz({
   rowScope,
   path,
   activeIndex,
+  excludedKeyIds,
+  onToggleKey,
 }: Props) {
   const keys = getLayoutKeys(layout)
   const allowedRows = rowsForScope(rowScope)
@@ -39,7 +43,8 @@ export function KeyboardViz({
     .join('; ')
 
   return (
-    <div className="keyboard" role="img" aria-label={m.password.keyboardAria(LAYOUT_NAMES[layout], pathLabel)}>
+    <div className="keyboard" role="group" aria-label={m.password.keyboardAria(LAYOUT_NAMES[layout], pathLabel)} aria-describedby="keyboard-hint">
+      <p className="keyboard-hint" id="keyboard-hint">{m.password.keyboardHint}</p>
       {rows.map((row) => {
         const rowKeys = keys.filter((k) => k.row === row)
         const rowOff = allowedRows != null && !allowedRows.includes(row)
@@ -54,22 +59,25 @@ export function KeyboardViz({
                 handMode !== 'both' &&
                 ((handMode === 'left' && k.hand === 'right') ||
                   (handMode === 'right' && k.hand === 'left'))
-              // One hand: the index finger always serves the bottom row (pivot)
-              const isPivotKey =
-                handMode !== 'both' && k.row === 3 && k.finger.endsWith('I')
-              const dimmed = handDimmed || (rowOff && !isPivotKey)
+              const dimmed = handDimmed || rowOff
+              const excluded = excludedKeyIds.includes(k.id)
               const inPath = pathIds.has(k.id)
               const isActive = activeKeyId === k.id
               const steps = order.get(k.id)
 
               return (
-                <div
+                <button
+                  type="button"
                   key={k.id}
+                  aria-label={m.password.keySelectionAria(k.base, m.fingers[k.finger], dimmed)}
+                  aria-pressed={!excluded}
+                  onClick={() => onToggleKey(k.id)}
                   className={[
                     'key',
                     `finger-${k.finger}`,
                     `hand-${k.hand}`,
                     dimmed ? 'is-dimmed' : '',
+                    excluded ? 'is-excluded' : '',
                     inPath ? 'is-path' : '',
                     isActive ? 'is-active' : '',
                   ]
@@ -85,7 +93,7 @@ export function KeyboardViz({
                         : steps.join('·')}
                     </span>
                   )}
-                </div>
+                </button>
               )
             })}
           </div>

@@ -350,13 +350,9 @@ export function avoidsShiftedSpecials(layout: LayoutId): boolean {
   return AVOIDS_SHIFTED_SPECIALS.has(layout)
 }
 
-/**
- * On AZERTY, the comma is the only symbol worth using: it is directly under
- * the right index finger. Every other symbol is either a stretch, a dead key,
- * or needs Shift.
- */
+/** Directly typed AZERTY number-row characters and bottom-row punctuation. */
 export function isComfortableSymbol(layout: LayoutId, char: string): boolean {
-  return layout !== 'azerty' || char === ','
+  return layout !== 'azerty' || `&é"'(-è_çà)=,;:!`.includes(char)
 }
 
 /** Whether digits can be typed without Shift on this layout (false on AZERTY). */

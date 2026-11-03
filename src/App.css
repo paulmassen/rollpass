@@ -271,6 +271,13 @@
   overflow: hidden;
 }
 
+.keyboard-hint {
+  margin: 0 0 0.75rem;
+  color: var(--key-ink);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 .keyboard-row {
   display: flex;
   gap: 0.32rem;
@@ -285,6 +292,8 @@
   position: relative;
   flex: 1 1 0;
   min-width: 0;
+  padding: 0;
+  cursor: pointer;
   aspect-ratio: 1 / 1.05;
   max-width: 3.1rem;
   display: grid;
@@ -330,6 +339,27 @@
 .key.is-dimmed {
   opacity: 0.28;
   filter: grayscale(0.4);
+}
+
+.key:hover {
+  border-color: var(--key-ink);
+}
+
+.key:focus-visible {
+  outline: 3px solid var(--accent-hot);
+  outline-offset: 2px;
+  z-index: 3;
+}
+
+.key.is-excluded .key-label {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.key.is-excluded {
+  opacity: 0.45;
+  filter: grayscale(1);
+  border-style: dashed;
 }
 
 .key.is-path {

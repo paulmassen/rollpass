@@ -31,8 +31,8 @@ type AppError =
 const DEFAULT_CHARSET: CharsetOptions = {
   lowercase: true,
   uppercase: false,
-  digits: false,
-  symbols: false,
+  digits: true,
+  symbols: true,
 }
 
 function detectLayout(): LayoutId {
@@ -49,6 +49,7 @@ export default function App() {
   const [rowScope, setRowScope] = useState<RowScope>('home-top')
   const [length, setLength] = useState(12)
   const [charset, setCharset] = useState<CharsetOptions>(DEFAULT_CHARSET)
+  const [excludedKeyIds, setExcludedKeyIds] = useState<string[]>([])
   const [result, setResult] = useState<GenerationResult | null>(null)
   const [error, setError] = useState<AppError | null>(null)
   const [copied, setCopied] = useState(false)
@@ -61,8 +62,8 @@ export default function App() {
   const copiedTimer = useRef<number | undefined>(undefined)
 
   const maxLength = useMemo(
-    () => estimateMaxLength(layout, handMode, charset, rowScope),
-    [layout, handMode, charset, rowScope],
+    () => estimateMaxLength(layout, handMode, charset, rowScope, excludedKeyIds),
+    [layout, handMode, charset, rowScope, excludedKeyIds],
   )
 
   const highlightIndex = playing ? activeIndex : trainCursor
@@ -82,6 +83,7 @@ export default function App() {
         length,
         charset,
         rowScope,
+        excludedKeyIds,
       })
       setResult(next)
       void replayPath(next.keys.length)
@@ -185,6 +187,10 @@ export default function App() {
             rowScope={rowScope}
             path={result?.keys ?? []}
             activeIndex={highlightIndex}
+            excludedKeyIds={excludedKeyIds}
+            onToggleKey={(id) => setExcludedKeyIds((previous) =>
+              previous.includes(id) ? previous.filter((keyId) => keyId !== id) : [...previous, id],
+            )}
           />
         </section>
 

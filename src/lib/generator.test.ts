@@ -79,6 +79,26 @@ describe('generatePassword', () => {
     },
   )
 
+  it('uses only direct AZERTY number-row characters when symbols are enabled', () => {
+    const charset = { lowercase: false, uppercase: false, digits: false, symbols: true }
+    const r = generatePassword(options({ layout: 'azerty', rowScope: 'number', charset, length: 12 }))
+    expect(r.keys.every((key) => key.row === 0 && !key.shifted)).toBe(true)
+    expect(new Set(r.password)).toEqual(new Set(`&é"'(-è_çà)=`))
+  })
+
+  it('respects excluded physical keys in both generation modes', () => {
+    for (const handMode of ['both', 'right'] as const) {
+      const excludedKeyIds = ['n', 'm', 'comma', 'period', 'slash']
+      const r = generatePassword(options({ handMode, rowScope: 'all', excludedKeyIds, length: 8 }))
+      expect(r.keys.every((key) => !excludedKeyIds.includes(key.keyId))).toBe(true)
+    }
+  })
+
+  it('never uses an unselected bottom row in one-hand mode', () => {
+    const r = generatePassword(options({ handMode: 'right', rowScope: 'home-top', length: 8 }))
+    expect(r.keys.every((key) => key.row === 1 || key.row === 2)).toBe(true)
+  })
+
   it('respects the character set', () => {
     for (let i = 0; i < 30; i++) {
       const lower = generatePassword(
@@ -191,7 +211,7 @@ describe('index pivot mode (one hand)', () => {
   const run = (
     handMode: 'left' | 'right',
     overrides: Partial<GeneratorOptions> = {},
-  ) => generatePassword(options({ handMode, length: 13, ...overrides }))
+  ) => generatePassword(options({ handMode, rowScope: 'top-home-bottom', length: 13, ...overrides }))
 
   it.each(LAYOUTS.flatMap((l) => HAND_MODES.map((h) => [l, h] as const)))(
     '%s / %s: index on the bottom row every other stroke, other fingers in between',
@@ -242,9 +262,9 @@ describe('index pivot mode (one hand)', () => {
   })
 
   it('the other fingers respect the row restriction', () => {
-    const allowed = rowsForScope('home-top')!
+    const allowed = rowsForScope('home-bottom')!
     for (let i = 0; i < 40; i++) {
-      const r = run('right', { rowScope: 'home-top' })
+      const r = run('right', { rowScope: 'home-bottom' })
       r.keys.forEach((k, j) => {
         if (j % 2 === 1) expect(allowed).toContain(k.row)
       })
@@ -265,7 +285,7 @@ describe('index pivot mode (one hand)', () => {
   })
 
   it('accepts up to the announced maximum length, not beyond', () => {
-    const max = estimateMaxLength('qwerty', 'left', LETTERS, 'home-top')
+    const max = estimateMaxLength('qwerty', 'left', LETTERS, 'top-home-bottom')
     expect(max).toBe(48)
     expect(run('left', { length: max }).password).toHaveLength(max)
     expect(() => run('left', { length: max + 1 })).toThrowError(GeneratorError)
@@ -310,7 +330,7 @@ describe('characters that are awkward to type', () => {
         )
         for (const k of r.keys) {
           if (k.shifted) expect(isLetter(k.char)).toBe(true)
-          if (!isLetter(k.char)) expect(k.char).toBe(',')
+          if (!isLetter(k.char)) expect(`&é"'(-è_çà)=,;:!`).toContain(k.char)
         }
       }
     }
@@ -351,23 +371,26 @@ describe('characters that are awkward to type', () => {
     }
   })
 
-  it('AZERTY uses comma as its only symbol', () => {
-    let seenComma = false
+  it('AZERTY can use each unshifted bottom-row symbol', () => {
+    const seen = new Set<string>()
     for (let i = 0; i < 200; i++) {
       const r = generatePassword(
         options({
           layout: 'azerty',
           charset: { lowercase: true, uppercase: false, digits: false, symbols: true },
-          rowScope: 'all',
-          length: 12,
+          handMode: 'right',
+          rowScope: 'home-bottom',
+          length: 48,
         }),
       )
       for (const char of r.password) {
-        if (!isLetter(char)) expect(char).toBe(',')
-        if (char === ',') seenComma = true
+        if (!isLetter(char)) {
+          expect(',;:!').toContain(char)
+          seen.add(char)
+        }
       }
     }
-    expect(seenComma).toBe(true)
+    expect(seen).toEqual(new Set([',', ';', ':', '!']))
   })
 
   it('digits-only on AZERTY falls back to lowercase letters', () => {
@@ -402,7 +425,7 @@ describe('index pivot reaches both bottom-row keys', () => {
     const seen = new Set<string>()
     for (let i = 0; i < 80; i++) {
       const r = generatePassword(
-        options({ handMode: hand, length: 13, rowScope: 'home-top' }),
+        options({ handMode: hand, length: 13, rowScope: 'top-home-bottom' }),
       )
       r.keys.forEach((k, j) => {
         if (j % 2 === 0) seen.add(k.keyId)

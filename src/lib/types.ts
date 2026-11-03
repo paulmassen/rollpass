@@ -13,7 +13,13 @@ export type LayoutId = 'qwerty' | 'azerty' | 'qwertz' | 'dvorak'
 export type HandMode = 'both' | 'left' | 'right'
 
 /** 0 = digits, 1 = top, 2 = home, 3 = bottom */
-export type RowScope = 'all' | 'home-top' | 'home-bottom' | 'top-bottom'
+export type RowScope =
+  | 'all'
+  | 'number' | 'top' | 'home' | 'bottom'
+  | 'number-top' | 'number-home' | 'number-bottom'
+  | 'home-top' | 'home-bottom' | 'top-bottom'
+  | 'number-top-home' | 'number-top-bottom' | 'number-home-bottom'
+  | 'top-home-bottom'
 
 export type CharsetOptions = {
   lowercase: boolean
@@ -28,6 +34,8 @@ export type GeneratorOptions = {
   length: number
   charset: CharsetOptions
   rowScope: RowScope
+  /** Physical keys explicitly excluded by the user. */
+  excludedKeyIds?: string[]
 }
 
 export type KeyDef = {

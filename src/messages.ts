@@ -22,19 +22,15 @@ export const m = {
     },
     rows: 'Rows',
     rowsAria: 'Keyboard rows',
-    rowScopes: {
-      all: { label: 'All', hint: 'Maximum variety' },
-      'home-top': { label: 'Home + top', hint: 'Fastest' },
-      'home-bottom': { label: 'Home + bottom', hint: 'Little movement' },
-      'top-bottom': { label: 'Top + bottom', hint: 'Without home' },
-    },
+    rowLabels: { number: 'Number', top: 'Top', home: 'Home', bottom: 'Bottom' },
+    rowsHint: 'Select one or more rows.',
     digitsOutOfReach:
-      'Digits live on the number row: inactive here. Switch to “All” to include them.',
+      'Digits live on the number row: select it to include them.',
     pivotNote:
-      'One hand: the index finger stays on the bottom row and alternates with the ring, middle and pinky fingers. The selected rows only apply to those three fingers, and index keys may repeat.',
+      'One hand: when the bottom row is selected, the index finger pivots there and may repeat keys. Without it, the pivot is unavailable.',
     digitsNeedShift:
       'On this layout digits need Shift, so Rollpass leaves them out.',
-    azertySymbols: 'On AZERTY, comma is the only smooth symbol.',
+    azertySymbols: 'AZERTY uses unshifted number-row characters and bottom-row punctuation when symbols are enabled.',
     length: 'Length',
     lengthAria: 'Password length',
     max: 'max',
@@ -57,6 +53,9 @@ export const m = {
       `Not enough unique keys (${available}) for a length of ${requested}. Shorten the password or enable more characters.`,
     keyboardAria: (layout: string, path: string) =>
       path ? `${layout} keyboard. Typing path: ${path}.` : `${layout} keyboard`,
+    keyboardHint: 'Choose keys for the next password. Dimmed keys are outside the current hand or rows.',
+    keySelectionAria: (key: string, finger: string, dimmed: boolean) =>
+      `${key}, ${finger}${dimmed ? ', outside current hand or rows' : ''}`,
     keyTitle: (hand: 'left' | 'right', finger: string, shifted: boolean) =>
       `${hand === 'left' ? 'Left' : 'Right'} · ${finger}${shifted ? ' · Shift' : ''}`,
   },

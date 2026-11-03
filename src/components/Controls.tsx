@@ -24,12 +24,25 @@ type Props = {
 
 const LAYOUTS: LayoutId[] = ['qwerty', 'azerty', 'qwertz', 'dvorak']
 const HANDS: HandMode[] = ['both', 'left', 'right']
-const ROW_SCOPES: RowScope[] = [
-  'home-top',
-  'home-bottom',
-  'top-bottom',
-  'all',
-]
+type Row = 'number' | 'top' | 'home' | 'bottom'
+const ROWS: Row[] = ['number', 'top', 'home', 'bottom']
+const SCOPE_ROWS: Record<RowScope, Row[]> = {
+  all: ROWS,
+  number: ['number'], top: ['top'], home: ['home'], bottom: ['bottom'],
+  'number-top': ['number', 'top'], 'number-home': ['number', 'home'],
+  'number-bottom': ['number', 'bottom'], 'home-top': ['top', 'home'],
+  'home-bottom': ['home', 'bottom'], 'top-bottom': ['top', 'bottom'],
+  'number-top-home': ['number', 'top', 'home'],
+  'number-top-bottom': ['number', 'top', 'bottom'],
+  'number-home-bottom': ['number', 'home', 'bottom'],
+  'top-home-bottom': ['top', 'home', 'bottom'],
+}
+
+function scopeForRows(rows: Row[]): RowScope {
+  return (Object.keys(SCOPE_ROWS) as RowScope[]).find((scope) =>
+    SCOPE_ROWS[scope].length === rows.length && rows.every((row) => SCOPE_ROWS[scope].includes(row)),
+  )!
+}
 
 export function Controls({
   layout,
@@ -46,8 +59,16 @@ export function Controls({
   onGenerate,
 }: Props) {
   const digitsAvailable = layoutSupportsDigits(layout)
+  const selectedRows = SCOPE_ROWS[rowScope]
   const digitsOutOfReach =
-    charset.digits && digitsAvailable && rowScope !== 'all'
+    charset.digits && digitsAvailable && !selectedRows.includes('number')
+
+  function toggleRow(row: Row) {
+    const next = selectedRows.includes(row)
+      ? selectedRows.filter((selected) => selected !== row)
+      : [...selectedRows, row]
+    if (next.length > 0) onRowScope(scopeForRows(next))
+  }
 
   return (
     <div className="controls">
@@ -96,22 +117,20 @@ export function Controls({
       <fieldset className="control-block">
         <legend>{m.controls.rows}</legend>
         <div className="segmented rows-grid" role="group" aria-label={m.controls.rowsAria}>
-          {ROW_SCOPES.map((id) => (
+          {ROWS.map((row) => (
             <button
-              key={id}
+              key={row}
               type="button"
-              aria-pressed={rowScope === id}
-              className={rowScope === id ? 'is-selected' : ''}
-              onClick={() => onRowScope(id)}
+              aria-pressed={selectedRows.includes(row)}
+              aria-disabled={selectedRows.length === 1 && selectedRows.includes(row)}
+              className={selectedRows.includes(row) ? 'is-selected' : ''}
+              onClick={() => toggleRow(row)}
             >
-              <span className="seg-title">{m.controls.rowScopes[id].label}</span>
-              <span className="seg-hint">{m.controls.rowScopes[id].hint}</span>
+              <span className="seg-title">{m.controls.rowLabels[row]}</span>
             </button>
           ))}
         </div>
-        <p className="seg-current" aria-hidden="true">
-          {m.controls.rowScopes[rowScope].hint}
-        </p>
+        <p className="seg-current">{m.controls.rowsHint}</p>
         {handMode !== 'both' && (
           <p className="control-hint">{m.controls.pivotNote}</p>
         )}
@@ -128,7 +147,8 @@ export function Controls({
           type="range"
           min={6}
           max={Math.max(6, maxLength)}
-          value={Math.min(length, maxLength)}
+          value={Math.max(6, Math.min(length, maxLength))}
+          disabled={maxLength < 6}
           onChange={(e) => onLength(Number(e.target.value))}
           aria-label={m.controls.lengthAria}
         />
@@ -146,7 +166,7 @@ export function Controls({
               ['lowercase', 'a–z'],
               ['uppercase', 'A–Z'],
               ['digits', '0–9'],
-              ['symbols', layout === 'azerty' ? ',' : '#$%'],
+              ['symbols', layout === 'azerty' ? '&é,;!' : '#$%'],
             ] as const
           ).map(([key, label]) => {
             const unavailable = key === 'digits' && !digitsAvailable
@@ -177,7 +197,8 @@ export function Controls({
       </fieldset>
 
       <div className="generate-dock">
-        <button type="button" className="btn-generate" onClick={onGenerate}>
+        {maxLength < 6 && <p className="control-hint">Enable more keys or character types to generate a password.</p>}
+        <button type="button" className="btn-generate" onClick={onGenerate} disabled={maxLength < 6}>
           {m.controls.generate}
         </button>
       </div>
