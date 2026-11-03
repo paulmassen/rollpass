@@ -57,7 +57,7 @@ export default function App() {
     return () => { cancelled = true }
   }, [])
   const [handMode, setHandMode] = useState<HandMode>('right')
-  const [rowScope, setRowScope] = useState<RowScope>('home-top')
+  const [rowScope, setRowScope] = useState<RowScope>('top-home-bottom')
   const [length, setLength] = useState(12)
   const [charset, setCharset] = useState<CharsetOptions>(DEFAULT_CHARSET)
   const [excludedKeyIds, setExcludedKeyIds] = useState<string[]>([])
