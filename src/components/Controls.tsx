@@ -9,6 +9,7 @@ import type {
 
 type Props = {
   layout: LayoutId
+  keyboardMap?: ReadonlyMap<string, string>
   handMode: HandMode
   rowScope: RowScope
   length: number
@@ -22,7 +23,7 @@ type Props = {
   onGenerate: () => void
 }
 
-const LAYOUTS: LayoutId[] = ['qwerty', 'azerty', 'qwertz', 'dvorak']
+const LAYOUTS: LayoutId[] = ['qwerty', 'azerty', 'azerty-mac', 'qwertz', 'dvorak']
 const HANDS: HandMode[] = ['both', 'left', 'right']
 type Row = 'number' | 'top' | 'home' | 'bottom'
 const ROWS: Row[] = ['number', 'top', 'home', 'bottom']
@@ -46,6 +47,7 @@ function scopeForRows(rows: Row[]): RowScope {
 
 export function Controls({
   layout,
+  keyboardMap,
   handMode,
   rowScope,
   length,
@@ -58,7 +60,9 @@ export function Controls({
   onCharset,
   onGenerate,
 }: Props) {
-  const digitsAvailable = layoutSupportsDigits(layout)
+  const digitsAvailable = keyboardMap
+    ? [...keyboardMap.values()].some((value) => /^[0-9]$/.test(value))
+    : layoutSupportsDigits(layout)
   const selectedRows = SCOPE_ROWS[rowScope]
   const digitsOutOfReach =
     charset.digits && digitsAvailable && !selectedRows.includes('number')

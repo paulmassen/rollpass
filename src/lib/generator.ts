@@ -103,12 +103,18 @@ function expandKey(
   layout: LayoutId,
   key: KeyDef,
   charset: CharsetOptions,
+  keyboardMap?: ReadonlyMap<string, string>,
 ): Candidate[] {
+  if (keyboardMap) {
+    const base = keyboardMap.get(key.id)
+    if (!base || base.length !== 1) return []
+    key = { ...key, base, shift: isLetter(base) ? base.toUpperCase() : base }
+  }
   const out: Candidate[] = []
   const usable = (char: string) =>
     charAllowed(char, charset) &&
     !isDeadKeyChar(layout, char) &&
-    (!isSymbol(char) || isComfortableSymbol(layout, char))
+    (!isSymbol(char) || !!keyboardMap || isComfortableSymbol(layout, char))
 
   if (usable(key.base)) {
     out.push({
@@ -308,7 +314,7 @@ function buildPivotPools(options: GeneratorOptions): PivotPools | null {
 
   for (const key of getLayoutKeys(options.layout)) {
     if (key.hand !== options.handMode || options.excludedKeyIds?.includes(key.id)) continue
-    const candidates = expandKey(options.layout, key, options.charset)
+    const candidates = expandKey(options.layout, key, options.charset, options.keyboardMap)
     if (candidates.length === 0) continue
 
     if (roleOf(key.finger) === 'index') {
@@ -403,7 +409,7 @@ function buildPool(options: GeneratorOptions): Candidate[] {
   })
   const pool: Candidate[] = []
   for (const key of keys) {
-    pool.push(...expandKey(options.layout, key, options.charset))
+    pool.push(...expandKey(options.layout, key, options.charset, options.keyboardMap))
   }
   const best = new Map<string, Candidate>()
   for (const c of pool) {
@@ -573,7 +579,7 @@ function log2Arrangements(n: number, k: number): number {
 }
 
 export function generatePassword(options: GeneratorOptions): GenerationResult {
-  const charset = normalizeCharset(options.charset, options.layout)
+  const charset = normalizeCharset(options.charset, options.layout, options.keyboardMap)
   const normalized = { ...options, charset }
   const pivotPools = buildPivotPools(normalized)
   if (pivotPools) return generatePivotPassword(normalized, pivotPools)
@@ -656,11 +662,12 @@ function generatePivotPassword(
 function normalizeCharset(
   charset: CharsetOptions,
   layout: LayoutId,
+  keyboardMap?: ReadonlyMap<string, string>,
 ): CharsetOptions {
-  // Digits that can only be typed with Shift (AZERTY) are never offered
+  // Only directly available digits are offered for a detected layout.
   const effective = {
     ...charset,
-    digits: charset.digits && layoutSupportsDigits(layout),
+    digits: charset.digits && (keyboardMap ? [...keyboardMap.values()].some(isDigit) : layoutSupportsDigits(layout)),
   }
   if (
     !effective.lowercase &&
@@ -679,14 +686,16 @@ export function estimateMaxLength(
   charset: CharsetOptions,
   rowScope: RowScope = 'all',
   excludedKeyIds: string[] = [],
+  keyboardMap?: ReadonlyMap<string, string>,
 ): number {
   const options: GeneratorOptions = {
     layout,
     handMode,
     length: 1,
-    charset: normalizeCharset(charset, layout),
+    charset: normalizeCharset(charset, layout, keyboardMap),
     rowScope,
     excludedKeyIds,
+    keyboardMap,
   }
   if (buildPivotPools(options)) return PIVOT_MAX_LENGTH
   return countKeys(buildPool(options))

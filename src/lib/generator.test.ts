@@ -79,11 +79,29 @@ describe('generatePassword', () => {
     },
   )
 
+  it('uses the French Mac number row at its physical positions', () => {
+    const charset = { lowercase: false, uppercase: false, digits: false, symbols: true }
+    const r = generatePassword(options({ layout: 'azerty-mac', rowScope: 'number', charset, length: 12 }))
+    expect(r.keys.find((key) => key.keyId === '8')?.char).toBe('!')
+    expect(r.keys.find((key) => key.keyId === '6')?.char).toBe('§')
+    expect(r.keys.every((key) => !key.shifted)).toBe(true)
+  })
+
   it('uses only direct AZERTY number-row characters when symbols are enabled', () => {
     const charset = { lowercase: false, uppercase: false, digits: false, symbols: true }
     const r = generatePassword(options({ layout: 'azerty', rowScope: 'number', charset, length: 12 }))
     expect(r.keys.every((key) => key.row === 0 && !key.shifted)).toBe(true)
     expect(new Set(r.password)).toEqual(new Set(`&é"'(-è_çà)=`))
+  })
+
+  it('uses the detected physical map without inventing unknown symbols or shifted punctuation', () => {
+    const keyboardMap = new Map([['8', '!'], ['9', 'ç'], ['0', 'à']])
+    const charset = { lowercase: false, uppercase: false, digits: false, symbols: true }
+    const config = options({ layout: 'azerty', rowScope: 'number', keyboardMap, charset, length: 3 })
+    const result = generatePassword(config)
+    expect(new Set(result.password)).toEqual(new Set(['!', 'ç', 'à']))
+    expect(result.keys.every((key) => keyboardMap.get(key.keyId) === key.char && !key.shifted)).toBe(true)
+    expect(estimateMaxLength('azerty', 'both', charset, 'number', [], keyboardMap)).toBe(3)
   })
 
   it('respects excluded physical keys in both generation modes', () => {

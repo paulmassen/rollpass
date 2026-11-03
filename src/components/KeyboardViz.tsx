@@ -5,6 +5,7 @@ import type { HandMode, LayoutId, RowScope, TypedKey } from '../lib/types'
 
 type Props = {
   layout: LayoutId
+  keyboardMap?: ReadonlyMap<string, string>
   handMode: HandMode
   rowScope: RowScope
   path: TypedKey[]
@@ -17,6 +18,7 @@ const ROW_OFFSETS = [0, 0.55, 0.85, 1.35]
 
 export function KeyboardViz({
   layout,
+  keyboardMap,
   handMode,
   rowScope,
   path,
@@ -55,6 +57,7 @@ export function KeyboardViz({
             style={{ paddingLeft: `${ROW_OFFSETS[row]}rem` }}
           >
             {rowKeys.map((k) => {
+              const label = keyboardMap ? keyboardMap.get(k.id) ?? '?' : k.base
               const handDimmed =
                 handMode !== 'both' &&
                 ((handMode === 'left' && k.hand === 'right') ||
@@ -69,7 +72,7 @@ export function KeyboardViz({
                 <button
                   type="button"
                   key={k.id}
-                  aria-label={m.password.keySelectionAria(k.base, m.fingers[k.finger], dimmed)}
+                  aria-label={m.password.keySelectionAria(label, m.fingers[k.finger], dimmed)}
                   aria-pressed={!excluded}
                   onClick={() => onToggleKey(k.id)}
                   className={[
@@ -85,7 +88,7 @@ export function KeyboardViz({
                     .join(' ')}
                   data-key={k.id}
                 >
-                  <span className="key-label">{k.base}</span>
+                  <span className="key-label">{label}</span>
                   {steps && (
                     <span className="key-step" title={steps.join(', ')}>
                       {steps.length > 3

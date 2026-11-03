@@ -7,10 +7,14 @@ export const m = {
 
   controls: {
     layout: 'Layout',
+    layoutDetected: 'Base keys reported by your browser; check that they match your keyboard. Select a layout to use its standard mapping instead.',
+    layoutManual: 'Using the selected standard layout. Check that it matches your keyboard.',
+    layoutFallback: 'Layout estimated from language and device, not detected. Select yours if needed.',
     layoutAria: 'Keyboard layout',
     layoutRegions: {
       qwerty: 'US / International',
       azerty: 'France / Belgium',
+      'azerty-mac': 'French Mac',
       qwertz: 'Germany / Switzerland',
       dvorak: 'Typing-optimized',
     },

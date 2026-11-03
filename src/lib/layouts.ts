@@ -165,6 +165,33 @@ const LAYOUT_CHARS: Record<LayoutId, Record<string, CharPair>> = {
     period: { base: ':', shift: '/' },
     slash: { base: '!', shift: '§' },
   },
+  // macOS French (verified against UCKeyTranslate); dead keys are not generated.
+  'azerty-mac': {
+    grave: { base: '@', shift: '#' },
+    '1': { base: '&', shift: '1' }, '2': { base: 'é', shift: '2' },
+    '3': { base: '"', shift: '3' }, '4': { base: "'", shift: '4' },
+    '5': { base: '(', shift: '5' }, '6': { base: '§', shift: '6' },
+    '7': { base: 'è', shift: '7' }, '8': { base: '!', shift: '8' },
+    '9': { base: 'ç', shift: '9' }, '0': { base: 'à', shift: '0' },
+    minus: { base: ')', shift: '°' }, equal: { base: '-', shift: '_' },
+    q: { base: 'a', shift: 'A' }, w: { base: 'z', shift: 'Z' },
+    e: { base: 'e', shift: 'E' }, r: { base: 'r', shift: 'R' },
+    t: { base: 't', shift: 'T' }, y: { base: 'y', shift: 'Y' },
+    u: { base: 'u', shift: 'U' }, i: { base: 'i', shift: 'I' },
+    o: { base: 'o', shift: 'O' }, p: { base: 'p', shift: 'P' },
+    lbracket: { base: '^', shift: '¨' }, rbracket: { base: '$', shift: '*' },
+    a: { base: 'q', shift: 'Q' }, s: { base: 's', shift: 'S' },
+    d: { base: 'd', shift: 'D' }, f: { base: 'f', shift: 'F' },
+    g: { base: 'g', shift: 'G' }, h: { base: 'h', shift: 'H' },
+    j: { base: 'j', shift: 'J' }, k: { base: 'k', shift: 'K' },
+    l: { base: 'l', shift: 'L' }, semicolon: { base: 'm', shift: 'M' },
+    quote: { base: 'ù', shift: '%' },
+    z: { base: 'w', shift: 'W' }, x: { base: 'x', shift: 'X' },
+    c: { base: 'c', shift: 'C' }, v: { base: 'v', shift: 'V' },
+    b: { base: 'b', shift: 'B' }, n: { base: 'n', shift: 'N' },
+    m: { base: ',', shift: '?' }, comma: { base: ';', shift: '.' },
+    period: { base: ':', shift: '/' }, slash: { base: '=', shift: '+' },
+  },
   qwertz: {
     grave: { base: '^', shift: '°' },
     '1': { base: '1', shift: '!' },
@@ -265,7 +292,8 @@ const LAYOUT_CHARS: Record<LayoutId, Record<string, CharPair>> = {
 
 export const LAYOUT_NAMES: Record<LayoutId, string> = {
   qwerty: 'QWERTY',
-  azerty: 'AZERTY',
+  azerty: 'AZERTY · Windows',
+  'azerty-mac': 'AZERTY · Mac',
   qwertz: 'QWERTZ',
   dvorak: 'Dvorak',
 }
@@ -333,6 +361,7 @@ export function isSymbol(char: string): boolean {
  */
 const DEAD_KEY_CHARS: Partial<Record<LayoutId, string>> = {
   azerty: '^¨',
+  'azerty-mac': '^¨`',
   qwertz: '^´`',
 }
 
@@ -344,7 +373,7 @@ export function isDeadKeyChar(layout: LayoutId, char: string): boolean {
  * AZERTY puts digits and most punctuation (? . / § % ° + £) behind Shift.
  * Those are avoided there: only letters may use Shift (capitals).
  */
-const AVOIDS_SHIFTED_SPECIALS: ReadonlySet<LayoutId> = new Set(['azerty'])
+const AVOIDS_SHIFTED_SPECIALS: ReadonlySet<LayoutId> = new Set(['azerty', 'azerty-mac'])
 
 export function avoidsShiftedSpecials(layout: LayoutId): boolean {
   return AVOIDS_SHIFTED_SPECIALS.has(layout)
@@ -352,6 +381,7 @@ export function avoidsShiftedSpecials(layout: LayoutId): boolean {
 
 /** Directly typed AZERTY number-row characters and bottom-row punctuation. */
 export function isComfortableSymbol(layout: LayoutId, char: string): boolean {
+  if (layout === 'azerty-mac') return `&é"'(§è!çà)-,;:=`.includes(char)
   return layout !== 'azerty' || `&é"'(-è_çà)=,;:!`.includes(char)
 }
 

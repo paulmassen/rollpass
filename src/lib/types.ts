@@ -9,7 +9,7 @@ export type Finger =
   | 'RR'
   | 'RP'
 
-export type LayoutId = 'qwerty' | 'azerty' | 'qwertz' | 'dvorak'
+export type LayoutId = 'qwerty' | 'azerty' | 'azerty-mac' | 'qwertz' | 'dvorak'
 export type HandMode = 'both' | 'left' | 'right'
 
 /** 0 = digits, 1 = top, 2 = home, 3 = bottom */
@@ -36,6 +36,8 @@ export type GeneratorOptions = {
   rowScope: RowScope
   /** Physical keys explicitly excluded by the user. */
   excludedKeyIds?: string[]
+  /** Browser-reported unmodified characters, indexed by physical key id. */
+  keyboardMap?: ReadonlyMap<string, string>
 }
 
 export type KeyDef = {

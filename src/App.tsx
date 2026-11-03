@@ -9,6 +9,7 @@ import { SecurityPanel } from './components/SecurityPanel'
 import { HeroTestimonial, Testimonials } from './components/Testimonials'
 import { TrainingMode } from './components/TrainingMode'
 import { m } from './messages'
+import { browserKeyboard, detectKeyboard, fallbackLayout } from './lib/keyboardDetection'
 import {
   GeneratorError,
   estimateMaxLength,
@@ -35,16 +36,26 @@ const DEFAULT_CHARSET: CharsetOptions = {
   symbols: true,
 }
 
-function detectLayout(): LayoutId {
-  const lang = navigator.language.toLowerCase()
-  if (lang.startsWith('fr') || lang.startsWith('be')) return 'azerty'
-  if (lang.startsWith('de') || lang.startsWith('at') || lang.startsWith('ch'))
-    return 'qwertz'
-  return 'qwerty'
-}
-
 export default function App() {
-  const [layout, setLayout] = useState<LayoutId>(() => detectLayout())
+  const [layout, setLayout] = useState<LayoutId>(() => fallbackLayout(navigator.language, navigator.platform))
+  const [keyboardMap, setKeyboardMap] = useState<ReadonlyMap<string, string> | undefined>()
+  const manuallySelectedLayout = useRef(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void detectKeyboard(browserKeyboard()).then((detected) => {
+      if (cancelled || manuallySelectedLayout.current || !detected) return
+      setLayout(detected.layout)
+      setKeyboardMap(detected.baseKeys)
+      // A password generated before the asynchronous lookup may use another mapping.
+      replayToken.current++
+      setPlaying(false)
+      setActiveIndex(null)
+      setTrainCursor(null)
+      setResult(null)
+    })
+    return () => { cancelled = true }
+  }, [])
   const [handMode, setHandMode] = useState<HandMode>('right')
   const [rowScope, setRowScope] = useState<RowScope>('home-top')
   const [length, setLength] = useState(12)
@@ -62,8 +73,8 @@ export default function App() {
   const copiedTimer = useRef<number | undefined>(undefined)
 
   const maxLength = useMemo(
-    () => estimateMaxLength(layout, handMode, charset, rowScope, excludedKeyIds),
-    [layout, handMode, charset, rowScope, excludedKeyIds],
+    () => estimateMaxLength(layout, handMode, charset, rowScope, excludedKeyIds, keyboardMap),
+    [layout, handMode, charset, rowScope, excludedKeyIds, keyboardMap],
   )
 
   const highlightIndex = playing ? activeIndex : trainCursor
@@ -84,6 +95,7 @@ export default function App() {
         charset,
         rowScope,
         excludedKeyIds,
+        keyboardMap,
       })
       setResult(next)
       void replayPath(next.keys.length)
@@ -183,6 +195,7 @@ export default function App() {
 
           <KeyboardViz
             layout={layout}
+            keyboardMap={keyboardMap}
             handMode={handMode}
             rowScope={rowScope}
             path={result?.keys ?? []}
@@ -197,12 +210,22 @@ export default function App() {
         <aside className="stage-controls">
           <Controls
             layout={layout}
+            keyboardMap={keyboardMap}
             handMode={handMode}
             rowScope={rowScope}
             length={length}
             maxLength={maxLength}
             charset={charset}
-            onLayout={setLayout}
+            onLayout={(next) => {
+              manuallySelectedLayout.current = true
+              setKeyboardMap(undefined)
+              setLayout(next)
+              replayToken.current++
+              setPlaying(false)
+              setActiveIndex(null)
+              setTrainCursor(null)
+              setResult(null)
+            }}
             onHandMode={setHandMode}
             onRowScope={setRowScope}
             onLength={setLength}
@@ -210,6 +233,7 @@ export default function App() {
             onGenerate={handleGenerate}
           />
 
+          <p className="aside-note" role="status">{keyboardMap ? m.controls.layoutDetected : manuallySelectedLayout.current ? m.controls.layoutManual : m.controls.layoutFallback}</p>
           <p className="aside-note">{m.asideNote}</p>
         </aside>
 
